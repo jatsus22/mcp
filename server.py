@@ -5,7 +5,7 @@ from mcp.server.fastmcp import FastMCP
 # --- 1. CONFIGURATION ---
 # Railway provides the 'PORT' environment variable automatically
 port = int(os.getenv("PORT", 8080))
-STEALTH_BASE = "https://stealthgpt.ai"
+STEALTH_BASE = "https://www.stealthgpt.ai"
 
 # --- 2. THE TOKEN BRIDGE ---
 # This looks for the name we defined in the Railway Dashboard
