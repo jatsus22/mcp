@@ -2,13 +2,14 @@ from mcp.server.fastmcp import FastMCP
 import httpx
 import os
 
-# 1. Move port and host configuration here
-# Using 0.0.0.0 is required for Docker
-port = int(os.getenv("PORT", 8000))
-mcp = FastMCP("stealth-gpt", host="0.0.0.0", port=port)
+# Initialize FastMCP - do NOT pass host/port here
+mcp = FastMCP("stealth-gpt")
 
 STEALTH_BASE = "https://stealthgpt.ai"
 API_TOKEN = os.getenv("STEALTH_API_TOKEN")
+
+if not API_TOKEN:
+    raise ValueError("STEALTH_API_TOKEN environment variable is not set. Please add it in Railway Variables.")
 
 @mcp.tool()
 async def stealthify(
@@ -47,6 +48,9 @@ async def stealthify(
     detection = data.get("howLikelyToBeDetected", "Unknown")
     return f"✅ Stealthified output:\n{result}\n\nDetection risk: {detection}"
 
+# Railway start command
 if __name__ == "__main__":
-    # 2. Call run() with ONLY the transport argument
-    mcp.run(transport="sse")
+    import uvicorn
+    port = int(os.getenv("PORT", 8000))
+    # Simple and correct way for hosted environments
+    mcp.run(transport="sse", port=port)
