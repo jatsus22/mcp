@@ -1,24 +1,45 @@
-import os
-import sys
-
-print("=== DEBUG START ===")
-print("DEBUG: Python version:", sys.version)
-print("DEBUG: STEALTH_API_TOKEN present:", "YES" if os.getenv("STEALTH_API_TOKEN") else "NO")
-print("DEBUG: Current working directory:", os.getcwd())
-
 from mcp.server.fastmcp import FastMCP
-
-print("DEBUG: Successfully imported FastMCP")
+import httpx
+import os
 
 mcp = FastMCP("stealth-gpt")
 
-print("DEBUG: FastMCP instance created successfully")
+STEALTH_BASE = "https://stealthgpt.ai"
+API_TOKEN = os.getenv("STEALTH_API_TOKEN")
 
 @mcp.tool()
-def hello_stealth(prompt: str = "test") -> str:
-    """Simple test tool - this should always work"""
-    print(f"DEBUG: Tool 'hello_stealth' was called with prompt = {prompt}")
-    return f"✅ MCP SERVER IS ALIVE!\nPrompt received: {prompt}\n\nYour StealthGPT.ai call is ready to be added next."
+async def stealthify(
+    prompt: str,
+    rephrase: bool = False,
+    tone: str = "College",
+    mode: str = "Medium",
+    qualityMode: str = "quality",
+    business: bool = False,
+    isMultilingual: bool = True,
+    outputFormat: str = "markdown"
+) -> str:
+    """Stealthify any text using StealthGPT.ai (exact same as your requests example)"""
+    url = f"{STEALTH_BASE}/api/stealthify"
+    headers = {
+        "api-token": API_TOKEN,
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "prompt": prompt,
+        "rephrase": rephrase,
+        "tone": tone,
+        "mode": mode,
+        "qualityMode": qualityMode,
+        "business": business,
+        "isMultilingual": isMultilingual,
+        "outputFormat": outputFormat
+    }
 
-print("DEBUG: Tool registered successfully")
-print("=== DEBUG END - server.py loaded completely ===")
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(url, json=payload, headers=headers, timeout=60)
+        resp.raise_for_status()
+        data = resp.json()
+
+    result = data.get("result") or data.get("output") or str(data)
+    detection = data.get("howLikelyToBeDetected", "Unknown")
+    return f"✅ Stealthified output:\n{result}\n\nDetection risk: {detection}"
