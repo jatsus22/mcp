@@ -19,7 +19,6 @@ async def call_stealth(endpoint: str, payload: dict) -> dict:
         resp.raise_for_status()
         return resp.json()
 
-# ── Tool 1: Simple stealthify (previous endpoint) ──
 @mcp.tool()
 async def stealthify(
     prompt: str,
@@ -33,13 +32,22 @@ async def stealthify(
     outputFormat: str = "text"
 ) -> str:
     """Simple stealthify - makes any text undetectable."""
-    payload = {k: v for k, v in locals().items() if k != "self"}
+    payload = {
+        "prompt": prompt,
+        "rephrase": rephrase,
+        "tone": tone,
+        "mode": mode,
+        "qualityMode": qualityMode,
+        "business": business,
+        "isMultilingual": isMultilingual,
+        "detector": detector,
+        "outputFormat": outputFormat
+    }
     data = await call_stealth("/api/stealthify", payload)
     result = data.get("result") or data.get("output") or str(data)
     detection = data.get("howLikelyToBeDetected", "Unknown")
     return f"✅ Stealth output:\n{result}\n\nDetection risk: {detection}"
 
-# ── Tool 2: Agent endpoint (NEW - the one you just shared) ──
 @mcp.tool()
 async def stealthify_agent(
     prompt: str,
@@ -47,14 +55,7 @@ async def stealthify_agent(
     enableFactCheck: bool = True,
     enableImageGeneration: bool = False
 ) -> str:
-    """Advanced Agent mode - uses StealthGPT.ai agent for better quality, fact-checking, etc.
-    
-    Args:
-        prompt: Your main prompt or text to process
-        preset: academic / professional / casual / creative / etc.
-        enableFactCheck: Enable fact verification
-        enableImageGeneration: Generate images (if supported)
-    """
+    """Advanced Agent mode - better quality + fact-checking."""
     payload = {
         "preset": preset,
         "prompt": prompt,
@@ -62,11 +63,6 @@ async def stealthify_agent(
         "enableImageGeneration": enableImageGeneration
     }
     data = await call_stealth("/api/stealthify/agent", payload)
-    
-    # Return nicely formatted output
     result = data.get("result") or data.get("output") or str(data)
-    detection = data.get("howLikelyToBeDetected", data.get("detection_score", "Unknown"))
+    detection = data.get("howLikelyToBeDetected", "Unknown")
     return f"✅ Agent Stealth Output:\n{result}\n\nDetection risk: {detection}"
-
-if __name__ == "__main__":
-    mcp.run(transport="sse")
