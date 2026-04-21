@@ -8,30 +8,40 @@ mcp = FastMCP("stealth-gpt")
 STEALTH_BASE = "https://stealthgpt.ai"
 API_TOKEN = os.getenv("STEALTH_API_TOKEN")
 
-async def call_stealth(endpoint: str, payload: dict) -> dict:
-    url = f"{STEALTH_BASE}{endpoint}"
+async def call_stealth(payload: dict) -> dict:
+    url = f"{STEALTH_BASE}/api/stealthify"
     headers = {
         "api-token": API_TOKEN,
         "Content-Type": "application/json"
     }
     async with httpx.AsyncClient() as client:
-        resp = await client.post(url, json=payload, headers=headers, timeout=300.0)
+        resp = await client.post(url, json=payload, headers=headers, timeout=60.0)
         resp.raise_for_status()
         return resp.json()
 
 @mcp.tool()
 async def stealthify(
     prompt: str,
-    rephrase: bool = True,
-    tone: str = "neutral",
-    mode: str = "stealth",
-    qualityMode: str = "high",
-    business: bool = True,
+    rephrase: bool = False,
+    tone: str = "College",
+    mode: str = "Medium",
+    qualityMode: str = "quality",
+    business: bool = False,
     isMultilingual: bool = True,
-    detector: str = "all",
-    outputFormat: str = "text"
+    outputFormat: str = "markdown"
 ) -> str:
-    """Simple stealthify - makes any text undetectable."""
+    """Stealthify text using StealthGPT.ai (basic endpoint) - makes it undetectable/human-like.
+    
+    Args:
+        prompt: The text or prompt you want to process
+        rephrase: Whether to rephrase the content
+        tone: College / Professional / Casual / etc.
+        mode: Medium / Stealth / etc.
+        qualityMode: quality / high / medium / low
+        business: Enable business mode
+        isMultilingual: Support multiple languages
+        outputFormat: markdown / text / html
+    """
     payload = {
         "prompt": prompt,
         "rephrase": rephrase,
@@ -40,29 +50,11 @@ async def stealthify(
         "qualityMode": qualityMode,
         "business": business,
         "isMultilingual": isMultilingual,
-        "detector": detector,
         "outputFormat": outputFormat
     }
-    data = await call_stealth("/api/stealthify", payload)
+    data = await call_stealth(payload)
+    
     result = data.get("result") or data.get("output") or str(data)
     detection = data.get("howLikelyToBeDetected", "Unknown")
-    return f"✅ Stealth output:\n{result}\n\nDetection risk: {detection}"
-
-@mcp.tool()
-async def stealthify_agent(
-    prompt: str,
-    preset: str = "academic",
-    enableFactCheck: bool = True,
-    enableImageGeneration: bool = False
-) -> str:
-    """Advanced Agent mode - better quality + fact-checking."""
-    payload = {
-        "preset": preset,
-        "prompt": prompt,
-        "enableFactCheck": enableFactCheck,
-        "enableImageGeneration": enableImageGeneration
-    }
-    data = await call_stealth("/api/stealthify/agent", payload)
-    result = data.get("result") or data.get("output") or str(data)
-    detection = data.get("howLikelyToBeDetected", "Unknown")
-    return f"✅ Agent Stealth Output:\n{result}\n\nDetection risk: {detection}"
+    
+    return f"✅ Stealthified output:\n{result}\n\nDetection risk: {detection}"
