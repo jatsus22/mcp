@@ -4,35 +4,24 @@ import os
 
 mcp = FastMCP("stealth-gpt")
 
-STEALTH_BASE = "https://stealthgpt.ai"
-API_TOKEN = os.getenv("STEALTH_API_TOKEN")
-
 @mcp.tool()
-async def stealthify(
-    prompt: str,
-    rephrase: bool = False,
-    tone: str = "College",
-    mode: str = "Medium",
-    qualityMode: str = "quality",
-    business: bool = False,
-    isMultilingual: bool = True,
-    outputFormat: str = "markdown"
-) -> str:
-    """Stealthify any text using StealthGPT.ai (exact same as your requests example)"""
-    url = f"{STEALTH_BASE}/api/stealthify"
+async def stealthify(prompt: str) -> str:
+    """Stealthify any text using StealthGPT.ai"""
+    token = os.getenv("STEALTH_API_TOKEN")
+    url = "https://stealthgpt.ai/api/stealthify"
     headers = {
-        "api-token": API_TOKEN,
+        "api-token": token,
         "Content-Type": "application/json"
     }
     payload = {
         "prompt": prompt,
-        "rephrase": rephrase,
-        "tone": tone,
-        "mode": mode,
-        "qualityMode": qualityMode,
-        "business": business,
-        "isMultilingual": isMultilingual,
-        "outputFormat": outputFormat
+        "rephrase": False,
+        "tone": "College",
+        "mode": "Medium",
+        "qualityMode": "quality",
+        "business": False,
+        "isMultilingual": True,
+        "outputFormat": "markdown"
     }
 
     async with httpx.AsyncClient() as client:
@@ -42,4 +31,4 @@ async def stealthify(
 
     result = data.get("result") or data.get("output") or str(data)
     detection = data.get("howLikelyToBeDetected", "Unknown")
-    return f"✅ Stealthified output:\n{result}\n\nDetection risk: {detection}"
+    return f"✅ Stealthified:\n{result}\n\nDetection risk: {detection}"
