@@ -2,7 +2,10 @@ from mcp.server.fastmcp import FastMCP
 import httpx
 import os
 
-mcp = FastMCP("stealth-gpt")
+# 1. Move port and host configuration here
+# Using 0.0.0.0 is required for Docker
+port = int(os.getenv("PORT", 8000))
+mcp = FastMCP("stealth-gpt", host="0.0.0.0", port=port)
 
 STEALTH_BASE = "https://stealthgpt.ai"
 API_TOKEN = os.getenv("STEALTH_API_TOKEN")
@@ -18,7 +21,7 @@ async def stealthify(
     isMultilingual: bool = True,
     outputFormat: str = "markdown"
 ) -> str:
-    """Stealthify any text using StealthGPT.ai (exact match to your working requests example)"""
+    """Stealthify any text using StealthGPT.ai"""
     url = f"{STEALTH_BASE}/api/stealthify"
     headers = {
         "api-token": API_TOKEN,
@@ -45,7 +48,5 @@ async def stealthify(
     return f"✅ Stealthified output:\n{result}\n\nDetection risk: {detection}"
 
 if __name__ == "__main__":
-    import uvicorn
-    port = int(os.getenv("PORT", 8000))
-    # Fixed: removed 'host' and 'path' arguments that caused the error
-    mcp.run(transport="sse", port=port)
+    # 2. Call run() with ONLY the transport argument
+    mcp.run(transport="sse")
