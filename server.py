@@ -4,24 +4,35 @@ import os
 
 mcp = FastMCP("stealth-gpt")
 
+STEALTH_BASE = "https://stealthgpt.ai"
+API_TOKEN = os.getenv("STEALTH_API_TOKEN")
+
 @mcp.tool()
-async def stealthify(prompt: str) -> str:
-    """Stealthify any text using StealthGPT.ai"""
-    token = os.getenv("STEALTH_API_TOKEN")
-    url = "https://stealthgpt.ai/api/stealthify"
+async def stealthify(
+    prompt: str,
+    rephrase: bool = False,
+    tone: str = "College",
+    mode: str = "Medium",
+    qualityMode: str = "quality",
+    business: bool = False,
+    isMultilingual: bool = True,
+    outputFormat: str = "markdown"
+) -> str:
+    """Stealthify any text using StealthGPT.ai (exact match to your working requests example)"""
+    url = f"{STEALTH_BASE}/api/stealthify"
     headers = {
-        "api-token": token,
+        "api-token": API_TOKEN,
         "Content-Type": "application/json"
     }
     payload = {
         "prompt": prompt,
-        "rephrase": False,
-        "tone": "College",
-        "mode": "Medium",
-        "qualityMode": "quality",
-        "business": False,
-        "isMultilingual": True,
-        "outputFormat": "markdown"
+        "rephrase": rephrase,
+        "tone": tone,
+        "mode": mode,
+        "qualityMode": qualityMode,
+        "business": business,
+        "isMultilingual": isMultilingual,
+        "outputFormat": outputFormat
     }
 
     async with httpx.AsyncClient() as client:
@@ -31,4 +42,10 @@ async def stealthify(prompt: str) -> str:
 
     result = data.get("result") or data.get("output") or str(data)
     detection = data.get("howLikelyToBeDetected", "Unknown")
-    return f"✅ Stealthified:\n{result}\n\nDetection risk: {detection}"
+    return f"✅ Stealthified output:\n{result}\n\nDetection risk: {detection}"
+
+if __name__ == "__main__":
+    import uvicorn
+    # Railway provides PORT environment variable
+    port = int(os.getenv("PORT", 8000))
+    mcp.run(transport="sse", host="0.0.0.0", port=port, path="/sse")
